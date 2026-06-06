@@ -1,0 +1,37 @@
+import subprocess
+import datetime
+import time
+ADB = input("Caminho do adb.exe: ")
+IP = input("Digite o IP do celular (ex: 192.168.1.102:34861): ")
+
+def screenshot():
+    nome = "tela_" + datetime.datetime.now().strftime("%d%m%Y_%H%M%S") + ".png"
+    subprocess.run([ADB, "-s", IP, "shell", "screencap", "/sdcard/tela.png"])
+    subprocess.run([ADB, "-s", IP, "pull", "/sdcard/tela.png", nome])
+    print(f"Screenshot salva como {nome}!")
+
+def gravar_tela():
+    print("Gravando... pressione Enter para parar")
+    processo = subprocess.Popen([ADB, "-s", IP, "shell", "screenrecord", "/sdcard/video.mp4"])
+    input()
+    processo.terminate()
+    time.sleep(3)
+    nome = "video_" + datetime.datetime.now().strftime("%d%m%Y_%H%M%S") + ".mp4"
+    subprocess.run([ADB, "-s", IP, "pull", "/sdcard/video.mp4", nome])
+    print(f"Video salvo como {nome}!")
+
+def push(arquivo, destino="/sdcard/"):
+    subprocess.run([ADB, "-s", IP, "push", arquivo, destino])
+
+def pull(arquivo_remoto, destino="."):
+    subprocess.run([ADB, "-s", IP, "pull", arquivo_remoto, destino])
+
+while True:
+    print("\n1 - Screenshot\n2 - Gravar tela\n3 - Enviar arquivo\n4 - Baixar arquivo\n5 - Trocar IP\n6 - Sair")
+    op = input("Escolha: ")
+    if op == "1": screenshot()
+    elif op == "2": gravar_tela()
+    elif op == "3": push(input("Arquivo local: "))
+    elif op == "4": pull(input("Arquivo remoto: "))
+    elif op == "5": IP = input("Novo IP: ")
+    elif op == "6": break
