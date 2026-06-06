@@ -1,6 +1,7 @@
 import subprocess
 import datetime
 import time
+
 ADB = input("Caminho do adb.exe: ")
 IP = input("Digite o IP do celular (ex: 192.168.1.102:34861): ")
 
@@ -12,12 +13,12 @@ def screenshot():
 
 def gravar_tela():
     print("Gravando... pressione Enter para parar")
-    processo = subprocess.Popen([ADB, "-s", IP, "shell", "screenrecord", "/sdcard/video.mp4"])
-    input()
-    processo.terminate()
-    time.sleep(3)
     nome = "video_" + datetime.datetime.now().strftime("%d%m%Y_%H%M%S") + ".mp4"
-    subprocess.run([ADB, "-s", IP, "pull", "/sdcard/video.mp4", nome])
+    processo = subprocess.Popen([ADB, "-s", IP, "shell", "screenrecord", "/sdcard/" + nome])
+    input()
+    subprocess.run([ADB, "-s", IP, "shell", "killall", "-2", "screenrecord"])
+    time.sleep(3)
+    subprocess.run([ADB, "-s", IP, "pull", "/sdcard/" + nome, nome])
     print(f"Video salvo como {nome}!")
 
 def push(arquivo, destino="/sdcard/"):
