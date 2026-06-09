@@ -1,27 +1,25 @@
-# adb-manager
+# ADB Manager
 
-Gerenciador de dispositivos Android via ADB desenvolvido em Python.
+A lightweight Python-based Android device manager using ADB over TCP/IP.
 
-Permite controlar um dispositivo conectado pela rede utilizando uma interface simples de terminal.
+## Features
 
-## Funcionalidades
+- 📸 Take screenshots remotely
+- 🎥 Record device screen
+- 📤 Upload files to the device
+- 📥 Download files from the device
+- 📡 Connect through ADB over network
+- 🔄 Switch between devices easily
 
-- 📸 Captura de screenshot
-- 🎥 Gravação de tela
-- 📤 Envio de arquivos para o dispositivo
-- 📥 Download de arquivos do dispositivo
-- 📡 Conexão via IP (ADB TCP/IP)
-- 🔄 Troca rápida de dispositivo
-
-## Requisitos
+## Requirements
 
 - Python 3.10+
 - Android Debug Bridge (ADB)
-- Depuração USB ativada no dispositivo
+- Android device with USB debugging enabled
 
-## Instalação
+## Installation
 
-Clone o repositório:
+Clone the repository:
 
 ```bash
 git clone https://github.com/eduardogabrielnq-byte/adb-manager.git
