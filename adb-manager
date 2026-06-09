@@ -1,38 +1,251 @@
 import subprocess
 import datetime
 import time
+from pathlib import Path
 
-ADB = input("Caminho do adb.exe: ")
-IP = input("Digite o IP do celular (ex: 192.168.1.102:34861): ")
+ADB = r"C:\Users\notebook\Downloads\platform-tools-latest-windows\platform-tools\adb.exe"
 
-def screenshot():
-    nome = "tela_" + datetime.datetime.now().strftime("%d%m%Y_%H%M%S") + ".png"
-    subprocess.run([ADB, "-s", IP, "shell", "screencap", "/sdcard/tela.png"])
-    subprocess.run([ADB, "-s", IP, "pull", "/sdcard/tela.png", nome])
-    print(f"Screenshot salva como {nome}!")
 
-def gravar_tela():
-    print("Gravando... pressione Enter para parar")
-    nome = "video_" + datetime.datetime.now().strftime("%d%m%Y_%H%M%S") + ".mp4"
-    processo = subprocess.Popen([ADB, "-s", IP, "shell", "screenrecord", "/sdcard/" + nome])
-    input()
-    subprocess.run([ADB, "-s", IP, "shell", "killall", "-2", "screenrecord"])
-    time.sleep(3)
-    subprocess.run([ADB, "-s", IP, "pull", "/sdcard/" + nome, nome])
-    print(f"Video salvo como {nome}!")
+class AndroidDevice:
 
-def push(arquivo, destino="/sdcard/"):
-    subprocess.run([ADB, "-s", IP, "push", arquivo, destino])
+    def __init__(self, adb_path, ip):
+        self.adb = adb_path
+        self.ip = ip
 
-def pull(arquivo_remoto, destino="."):
-    subprocess.run([ADB, "-s", IP, "pull", arquivo_remoto, destino])
+    def adb_run(self, *args):
+        return subprocess.run(
+            [self.adb, "-s", self.ip, *args],
+            capture_output=True,
+            text=True
+        )
 
-while True:
-    print("\n1 - Screenshot\n2 - Gravar tela\n3 - Enviar arquivo\n4 - Baixar arquivo\n5 - Trocar IP\n6 - Sair")
-    op = input("Escolha: ")
-    if op == "1": screenshot()
-    elif op == "2": gravar_tela()
-    elif op == "3": push(input("Arquivo local: "))
-    elif op == "4": pull(input("Arquivo remoto: "))
-    elif op == "5": IP = input("Novo IP: ")
-    elif op == "6": break
+    def conectado(self):
+
+        resultado = self.adb_run("get-state")
+
+        return (
+            resultado.returncode == 0
+            and "device" in resultado.stdout
+        )
+
+    def screenshot(self):
+
+        print("\n[+] Capturando tela...")
+
+        nome = (
+            "tela_"
+            + datetime.datetime.now().strftime(
+                "%d%m%Y_%H%M%S"
+            )
+            + ".png"
+        )
+
+        resultado = self.adb_run(
+            "shell",
+            "screencap",
+            "/sdcard/tela.png"
+        )
+
+        if resultado.returncode != 0:
+            print("[X] Erro ao capturar tela.")
+            return
+
+        self.adb_run(
+            "pull",
+            "/sdcard/tela.png",
+            nome
+        )
+
+        print(f"[✓] Screenshot salva: {nome}")
+
+    def gravar_tela(self):
+
+        nome = (
+            "video_"
+            + datetime.datetime.now().strftime(
+                "%d%m%Y_%H%M%S"
+            )
+            + ".mp4"
+        )
+
+        print(
+            "\n[+] Gravando... pressione ENTER para parar."
+        )
+
+        subprocess.Popen(
+            [
+                self.adb,
+                "-s",
+                self.ip,
+                "shell",
+                "screenrecord",
+                f"/sdcard/{nome}"
+            ]
+        )
+
+        input()
+
+        self.adb_run(
+            "shell",
+            "killall",
+            "-2",
+            "screenrecord"
+        )
+
+        time.sleep(3)
+
+        self.adb_run(
+            "pull",
+            f"/sdcard/{nome}",
+            nome
+        )
+
+        print(f"[✓] Vídeo salvo: {nome}")
+
+    def push(self, arquivo):
+
+        if not Path(arquivo).exists():
+            print("[X] Arquivo não encontrado.")
+            return
+
+        resultado = self.adb_run(
+            "push",
+            arquivo,
+            "/sdcard/"
+        )
+
+        if resultado.returncode == 0:
+            print("[✓] Arquivo enviado.")
+        else:
+            print("[X] Erro ao enviar arquivo.")
+
+    def pull(self, remoto):
+
+        resultado = self.adb_run(
+            "pull",
+            remoto,
+            "."
+        )
+
+        if resultado.returncode == 0:
+            print("[✓] Arquivo baixado.")
+        else:
+            print("[X] Erro ao baixar arquivo.")
+
+
+def mostrar_menu(celular):
+
+    print(f"""
+========================================
+           ADB MANAGER v1.0
+========================================
+
+[✓] Conectado
+IP: {celular.ip}
+
+1 - Screenshot
+2 - Gravar tela
+3 - Enviar arquivo
+4 - Baixar arquivo
+5 - Trocar IP
+6 - Sair
+
+========================================
+""")
+
+
+def menu():
+
+    print("""
+========================================
+           ADB MANAGER v1.0
+========================================
+""")
+
+    ip = input("Digite o IP do celular: ")
+
+    celular = AndroidDevice(
+        ADB,
+        ip
+    )
+
+    if not celular.conectado():
+
+        print(
+            "\n[X] Dispositivo não conectado."
+        )
+
+        print(
+            "\nDica: execute antes:"
+        )
+
+        print(
+            f'"{ADB}" connect {ip}'
+        )
+
+        return
+
+    while True:
+
+        mostrar_menu(celular)
+
+        op = input("Escolha: ")
+
+        if op == "1":
+
+            celular.screenshot()
+
+        elif op == "2":
+
+            celular.gravar_tela()
+
+        elif op == "3":
+
+            celular.push(
+                input("Arquivo local: ")
+            )
+
+        elif op == "4":
+
+            celular.pull(
+                input("Arquivo remoto: ")
+            )
+
+        elif op == "5":
+
+            novo_ip = input(
+                "Novo IP: "
+            )
+
+            celular = AndroidDevice(
+                ADB,
+                novo_ip
+            )
+
+            if celular.conectado():
+                print(
+                    "\n[✓] Novo dispositivo conectado."
+                )
+            else:
+                print(
+                    "\n[X] Não foi possível conectar."
+                )
+
+        elif op == "6":
+
+            print(
+                "\nAté mais!"
+            )
+
+            break
+
+        else:
+
+            print(
+                "\n[X] Opção inválida."
+            )
+
+
+if __name__ == "__main__":
+    menu()
+  
