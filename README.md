@@ -13,7 +13,7 @@ A lightweight Python-based Android device manager that uses ADB over TCP/IP to c
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.12+
 - Android Debug Bridge (ADB)
 - Android device with USB Debugging enabled
 
